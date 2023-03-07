@@ -145,15 +145,13 @@ class ModuleBase:
                 if not results["@odata.context"]:
                     results["@odata.context"] = json_response.get("@odata.context", None)  # fmt: skip
 
-                # Get the values returned and append to results
-                value = json_response.get("value", None)
-                if value:
+                if value := json_response.get("value", None):
                     results["value"] += value
 
                 # Get the next URL if more results
                 url = json_response.get("@odata.nextLink", None)
                 if url:
-                    logging.debug(f"Requesting next page...")
+                    logging.debug("Requesting next page...")
 
             return results
 
@@ -190,7 +188,7 @@ class ModuleBase:
 
         try:
             response = requests.post(
-                url=f"https://graph.microsoft.com/v1.0/search/query",
+                url="https://graph.microsoft.com/v1.0/search/query",
                 json=json,
                 headers=headers,
                 verify=False,

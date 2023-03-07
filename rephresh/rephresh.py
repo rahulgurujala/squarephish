@@ -112,7 +112,7 @@ if __name__ == "__main__":
             logging.error(f"Skipping invalid module: '{m}'")
 
     args.module = [x for x in args.module if x in utils.DATA_MODULES]
-    if len(args.module) < 1:
+    if not args.module:
         logging.error("No modules provided")
         sys.exit(1)
 

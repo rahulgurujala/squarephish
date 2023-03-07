@@ -105,10 +105,9 @@ def parse_args() -> argparse.Namespace:
             parser.error("the following arguments are required: -e/--email")
             sys.exit(1)
 
-    if args.module == "server":
-        if args.help:
-            server_parser.print_help()
-            sys.exit(1)
+    if args.module == "server" and args.help:
+        server_parser.print_help()
+        sys.exit(1)
 
     # Validate the config file exists
     if not Path(args.config).is_file():
@@ -148,10 +147,13 @@ def parse_config(config_file: str, module: str) -> CustomConfigParser:
     try:
         for val in utils.CONFIG_DEFAULT:
             # Ignore values that can be left blank
-            if val not in ["SMTP_EMAIL", "SMTP_PASSWORD", "SMTP_PROTO"]:
-                if not config.get("DEFAULT", val):
-                    logging.error(f"Missing value for option '{val.lower()}' in section: 'DEFAULT'")  # fmt: skip
-                    sys.exit(1)
+            if val not in [
+                "SMTP_EMAIL",
+                "SMTP_PASSWORD",
+                "SMTP_PROTO",
+            ] and not config.get("DEFAULT", val):
+                logging.error(f"Missing value for option '{val.lower()}' in section: 'DEFAULT'")  # fmt: skip
+                sys.exit(1)
 
         if module == "email":
             for val in utils.CONFIG_EMAIL:
@@ -159,7 +161,7 @@ def parse_config(config_file: str, module: str) -> CustomConfigParser:
                     logging.error(f"Missing value for option '{val.lower()}' in section: 'EMAIL'")  # fmt: skip
                     sys.exit(1)
 
-        if module == "server":
+        elif module == "server":
             for val in utils.CONFIG_SERVER:
                 if not config.get("SERVER", val):
                     logging.error(f"Missing value for option '{val.lower()}' in section: 'SERVER'")  # fmt: skip
@@ -181,7 +183,7 @@ def parse_config(config_file: str, module: str) -> CustomConfigParser:
         with open(qrcode_template_file, "r") as f:
             config.set("EMAIL", "EMAIL_TEMPLATE", f.read())
 
-    if module == "server":
+    elif module == "server":
         devicecode_template_file = config.get("SERVER", "EMAIL_TEMPLATE")
         if not Path(devicecode_template_file).is_file():
             logging.error("Invalid device code email template file")
@@ -193,13 +195,16 @@ def parse_config(config_file: str, module: str) -> CustomConfigParser:
 
         # Validate cert files - if present
         try:
-            if config.get("SERVER", "CERT_CRT") and config.get("SERVER", "CERT_KEY"):
-                if (
+            if (
+                config.get("SERVER", "CERT_CRT")
+                and config.get("SERVER", "CERT_KEY")
+                and (
                     not Path(config.get("SERVER", "CERT_CRT")).is_file()
                     or not Path(config.get("SERVER", "CERT_KEY")).is_file()
-                ):
-                    logging.error("Invalid server SSL certificate files")
-                    sys.exit(1)
+                )
+            ):
+                logging.error("Invalid server SSL certificate files")
+                sys.exit(1)
         except NoOptionError:
             pass
 
@@ -222,17 +227,15 @@ if __name__ == "__main__":
     emailer = Emailer(config=config)
 
     if args.module == "email":
-        emailed = QRCodeEmail.send_qrcode(
+        if emailed := QRCodeEmail.send_qrcode(
             email=args.email,
             config=config,
             emailer=emailer,
-        )
-
-        if not emailed:
-            logging.error("Failed to send QR code to victim")
+        ):
+            logging.info(f"Successfully sent email to: {args.email}")
 
         else:
-            logging.info(f"Successfully sent email to: {args.email}")
+            logging.error("Failed to send QR code to victim")
 
     elif args.module == "server":
         logging.info(f"Starting: {app_info}")

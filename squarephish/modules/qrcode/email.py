@@ -92,9 +92,9 @@ class QRCodeEmail:
 
         # Create a new MIME image to embed into the email as inline
         logo = MIMEImage(qrcode)
-        logo.add_header("Content-ID", f"<qrcode.png>")  # <img src"cid:qrcode.png">
+        logo.add_header("Content-ID", "<qrcode.png>")
         logo.add_header("X-Attachment-Id", "qrcode.png")
-        logo["Content-Disposition"] = f"inline; filename=qrcode.png"
+        logo["Content-Disposition"] = "inline; filename=qrcode.png"
 
         msg.get_payload()[1].make_mixed()
         msg.get_payload()[1].attach(logo)
