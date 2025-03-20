@@ -53,9 +53,7 @@ def acquire_tenant_id(domain: str) -> str:
     try:
         response = requests.get(url, headers=utils.HTTP_OPSEC_HEADERS, verify=False)
         json_response = response.json()
-        tenant_id = json_response["token_endpoint"].split("/")[3]
-        return tenant_id
-
+        return json_response["token_endpoint"].split("/")[3]
     except requests.RequestException as e:
         logging.error(f"Error: {e}")
         return None
